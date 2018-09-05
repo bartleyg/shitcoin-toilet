@@ -1,52 +1,64 @@
 pragma solidity ^0.4.24;
 
-import { Ownable } from "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/DetailedERC20.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/MintableToken.sol";
+import "./erc223-20-contracts/contracts/ERC223BasicToken.sol";
+import "./erc223-20-contracts/contracts/ERC223ReceivingContract.sol";
 
 /*
-Contract receives ERC20 tokens and mints equal amount 💩coin in return
+Contract receives ERC20 tokens and mints equal amount ERC223 💩coin in return
 This requires 2 separate transactions by user
 Transaction 1: user does approve(address thisContract, uint amt) transaction on the token in web3
 Transaction 2: once mined user calls this contract toilet(address token, uint amt) which:
   1. checks token.allowance(address msg.sender, address thisContract) matches amt
   2. checks token.balanceOf(address msg.sender) >= amt (is this checked already in approve?)
   3. token.transferFrom(address msg.sender, address thisContract, uint amt)
-  4. mints ERC777 💩coin in amount equal to that received by user's token
+  4. mints ERC223 💩coin in amount equal to that received by user's token
 */
-contract ShitcoinToilet is Ownable {
+contract ShitcoinToilet is DetailedERC20, MintableToken, ERC223BasicToken, ERC223ReceivingContract {
+
+  string constant NAME = "💩COIN";
+  string constant SYMBOL = "💩COIN";
+  uint8 constant DECIMALS = 18;
 
   event Flushed(address indexed user, address token, uint amount);
 
-  address[] _defaultOperators = [msg.sender];
-
   // initialize base constructor with coin parameters
-  //constructor() public ERC777ERC20BaseToken("💩COIN", "💩COIN", 1, _defaultOperators) {}
+  constructor()
+    DetailedERC20(NAME, SYMBOL, DECIMALS)
+    public
+  {}
 
   // toilet() requires that msg.sender has already called approve() on the token
   // with this contract's address to allow this contract to receive the tokens
   function toilet(address token, uint amount) external returns(uint) {
     require(token != address(this));  // would be pointless to do this
-    require(ERC20Token(token).allowance(msg.sender, address(this)) >= amount);
-    require(ERC20Token(token).balanceOf(msg.sender) >= amount);
-    require(ERC20Token(token).transferFrom(msg.sender, address(this), amount));
+    require(ERC20(token).allowance(msg.sender, address(this)) >= amount);
+    require(ERC20(token).balanceOf(msg.sender) >= amount);
+    require(ERC20(token).transferFrom(msg.sender, address(this), amount));
     emit Flushed(msg.sender, token, amount);
     // mints 💩coin in amount equal to that received by user's token
-
+    mint(msg.sender, amount);
     return balanceOf(msg.sender);
   }
 
+  // handler called when an ERC223 token is sent to this contract
+  function tokenFallback(address _from, uint256 _value, bytes _data) public {}
+
   // add ability for contract to transfer 3rd party ERC20 tokens it owns
-  function contractTransfer(address token, address to, uint tokens) {
-    ERC20Token(token).transfer(to, tokens);
+  function contractTransfer(address token, address to, uint tokens) public onlyOwner {
+    ERC20(token).transfer(to, tokens);
   }
 
   // add ability for contract to approve 3rd party ERC20 tokens it owns
-  function contractApprove(address token, address spender, uint tokens) {
-    ERC20Token(token).approve(spender, tokens);
+  function contractApprove(address token, address spender, uint tokens) public onlyOwner {
+    ERC20(token).approve(spender, tokens);
   }
 
   // add ability for contract to transfer 3rd party ERC20 tokens it owns
-  function contractTransferFrom(address token, address from, address to, uint tokens) {
-    ERC20Token(token).transferFrom(from, to, tokens);
+  function contractTransferFrom(address token, address from, address to, uint tokens)
+  public onlyOwner {
+    ERC20(token).transferFrom(from, to, tokens);
   }
 
 }
