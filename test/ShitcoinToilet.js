@@ -56,7 +56,7 @@ contract('ShitcoinToilet', (accounts) => {
     assert.equal(supply.valueOf(), 0, 'should be 0');
   });
 
-  it('should approve spend tokens to ShitcoinToilet', async () => {
+  it('should approve, toilet flush, mint tokens at ShitcoinToilet', async () => {
     let userBalance = await token.balanceOf.call(user);
     await token.approve(shitcoinToilet.address, userBalance, {from: user});
     let amountToSpend = await token.allowance.call(user, shitcoinToilet.address);
@@ -65,15 +65,23 @@ contract('ShitcoinToilet', (accounts) => {
     let shitcoinBalance = await shitcoinToilet.balanceOf.call(user);
     assert.equal(shitcoinBalance.valueOf(), 0, 'should be 0');
 
-    /* currently broken: reverts
-    try {
-      await shitcoinToilet.toilet(token.address, userBalance, {from: user});
-    } catch (err) {
-      console.log('toilet() failed with:', err.reason)
-    }
-    let shitcoinBalance = await shitcoinToilet.balanceOf.call(user);
-    assert.equal(shitcoinBalance.valueOf(), 1000, 'should be 1000');
-    */
+    await shitcoinToilet.toilet(token.address, userBalance, {from: user});
+
+    let contractBalanceOfToken = await token.balanceOf.call(shitcoinToilet.address);
+    assert.equal(contractBalanceOfToken.valueOf(), 1000, 'should be 1000');
+
+    let userBalanceOfToken = await token.balanceOf.call(user);
+    assert.equal(userBalanceOfToken.valueOf(), 0, 'should be 0');
+
+    let contractShitcoinBalance = await shitcoinToilet.balanceOf.call(shitcoinToilet.address);
+    assert.equal(contractShitcoinBalance.valueOf(), 0, 'should be 0');
+
+    let userShitcoinBalance = await shitcoinToilet.balanceOf.call(user);
+    assert.equal(userShitcoinBalance.valueOf(), 1000, 'should be 1000');
+
+    let supply = await shitcoinToilet.totalSupply.call();
+    assert.equal(supply.valueOf(), 1000, 'should be 1000');
+
   });
 
 

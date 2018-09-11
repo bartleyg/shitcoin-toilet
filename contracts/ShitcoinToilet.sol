@@ -37,9 +37,17 @@ contract ShitcoinToilet is DetailedERC20, MintableToken, ERC223BasicToken, ERC22
     require(ERC20(token).balanceOf(msg.sender) >= amount, 'insufficient balance');
     require(ERC20(token).transferFrom(msg.sender, address(this), amount), 'transferFrom failed');
     emit Flushed(msg.sender, token, amount);
-    // mints 💩coin in amount equal to that received by user's token
-    mint(msg.sender, amount);
+    // mints 💩COIN in amount equal to that received by user's token
+    require(toiletMint(msg.sender, amount), 'toiletMint failed');
     return balanceOf(msg.sender);
+  }
+
+  function toiletMint(address _to, uint256 _amount) private canMint returns (bool) {
+    totalSupply_ = totalSupply_.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    emit Mint(_to, _amount);
+    emit Transfer(address(0), _to, _amount);
+    return true;
   }
 
   // handler called when an ERC223 token is sent to this contract
