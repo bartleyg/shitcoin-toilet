@@ -32,10 +32,10 @@ contract ShitcoinToilet is DetailedERC20, MintableToken, ERC223BasicToken, ERC22
   // toilet() requires that msg.sender has already called approve() on the token
   // with this contract's address to allow this contract to receive the tokens
   function toilet(address token, uint amount) external returns(uint) {
-    require(token != address(this));  // would be pointless to do this
-    require(ERC20(token).allowance(msg.sender, address(this)) >= amount);
-    require(ERC20(token).balanceOf(msg.sender) >= amount);
-    require(ERC20(token).transferFrom(msg.sender, address(this), amount));
+    require(token != address(this), 'cant send 💩COIN to own toilet');  // would be pointless to do this
+    require(ERC20(token).allowance(msg.sender, address(this)) >= amount, 'insufficient allowance');
+    require(ERC20(token).balanceOf(msg.sender) >= amount, 'insufficient balance');
+    require(ERC20(token).transferFrom(msg.sender, address(this), amount), 'transferFrom failed');
     emit Flushed(msg.sender, token, amount);
     // mints 💩coin in amount equal to that received by user's token
     mint(msg.sender, amount);

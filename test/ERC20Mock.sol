@@ -1,5 +1,5 @@
 pragma solidity ^0.4.24;
 
-import "openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/MintableToken.sol";
 
-contract ERC20Mock is StandardToken {}
+contract ERC20Mock is MintableToken {}

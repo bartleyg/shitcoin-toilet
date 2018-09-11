@@ -3,88 +3,81 @@ const ERC20Mock = artifacts.require('ERC20Mock');
 
 contract('ShitcoinToilet', (accounts) => {
 
-  let token;
+  let token, token2;
   let owner = accounts[0];
+  let user = accounts[1];
 
   before(async () => {
     token = await ERC20Mock.new();
+    token2 = await ERC20Mock.new();
     shitcoinToilet = await ShitcoinToilet.new();
   });
 
-  it('should initialize ERC20 mock token', async () => {
+  it('should initialize ERC20 mock tokens', async () => {
     let supply = await token.totalSupply.call();
+    assert.equal(supply.valueOf(), 0, 'should be 0');
+
+    supply = await token2.totalSupply.call();
     assert.equal(supply.valueOf(), 0, 'should be 0');
 
   });
 
-/*
-  it('should set the start values properly', async () => {
-    let name = await token.name.call();
-    assert.equal(name, 'Example', 'should be Example');
-
-    let symbol = await token.symbol.call();
-    assert.equal(symbol, 'EXM', 'should be EXM');
-
-    let decimals = await token.decimals.call();
-    assert.equal(decimals.valueOf(), 18, 'should be 18');
-
-    let supply = await token.totalSupply.call();
-    assert.equal(supply.valueOf(), 0, 'should be 0');
-
-    let _owner = await token.owner.call();
-    assert.equal(_owner, owner, 'should be the owner of the token');
-
-    let mintingFinished = await token.mintingFinished.call();
-    assert.equal(mintingFinished, false, 'should be false');
-
-  });
-
-  it('should mint tokens properly until ends minting feature', async () => {
-    await token.mint(owner, 1000);
+  it('should mint ERC20 mock tokens', async () => {
+    await token.mint(user, 1000);
 
     let supply = await token.totalSupply.call();
     assert.equal(supply.valueOf(), 1000, 'should be 1000');
 
-    let ownerBalance = await token.balanceOf.call(owner);
-    assert.equal(ownerBalance.valueOf(), 1000, 'should be 1000');
+    let userBalance = await token.balanceOf.call(user);
+    assert.equal(userBalance.valueOf(), 1000, 'should be 1000');
 
     await token.finishMinting();
     let mintingFinished = await token.mintingFinished.call();
     assert.equal(mintingFinished, true, 'should be true');
 
-    await expectThrow(token.mint(owner, 500));
+    /* token 2 */
+    await token2.mint(user, 17);
 
-    supply = await token.totalSupply.call();
-    assert.equal(supply.valueOf(), 1000, 'should be 1000');
+    supply = await token2.totalSupply.call();
+    assert.equal(supply.valueOf(), 17, 'should be 17');
 
+    userBalance = await token2.balanceOf.call(user);
+    assert.equal(userBalance.valueOf(), 17, 'should be 17');
   });
 
-  it('should transfer to account', async () => {
-    await token.transfer(accounts[1], 20);
+  it('should initialize ShitcoinToilet token', async () => {
+    let name = await shitcoinToilet.name.call();
+    assert.equal(name, '💩COIN', 'should be 💩COIN');
 
-    let balanceAccount1 = await token.balanceOf.call(accounts[1]);
-    assert.equal(balanceAccount1.valueOf(), 20, 'should be 20');
+    let symbol = await shitcoinToilet.symbol.call();
+    assert.equal(symbol, '💩COIN', 'should be 💩COIN');
 
-    it('should approve spend tokens to another account, increase and decrease that amount', async () => {
-      await token.approve(accounts[1], 45);
+    let supply = await shitcoinToilet.totalSupply.call();
+    assert.equal(supply.valueOf(), 0, 'should be 0');
+  });
 
-      let amountToSpend = await token.allowance.call(accounts[0], accounts[1]);
+  it('should approve spend tokens to ShitcoinToilet', async () => {
+    let userBalance = await token.balanceOf.call(user);
+    await token.approve(shitcoinToilet.address, userBalance, {from: user});
+    let amountToSpend = await token.allowance.call(user, shitcoinToilet.address);
+    assert.equal(amountToSpend.valueOf(), 1000, "should be 1000");
 
-      assert.equal(amountToSpend.valueOf(), 45, "should be 45");
+    let shitcoinBalance = await shitcoinToilet.balanceOf.call(user);
+    assert.equal(shitcoinBalance.valueOf(), 0, 'should be 0');
 
-      await token.increaseApproval(accounts[1], 15);
+    /* currently broken: reverts
+    try {
+      await shitcoinToilet.toilet(token.address, userBalance, {from: user});
+    } catch (err) {
+      console.log('toilet() failed with:', err.reason)
+    }
+    let shitcoinBalance = await shitcoinToilet.balanceOf.call(user);
+    assert.equal(shitcoinBalance.valueOf(), 1000, 'should be 1000');
+    */
+  });
 
-      amountToSpend = await token.allowance.call(accounts[0], accounts[1]);
 
-      assert.equal(amountToSpend.valueOf(), 60, "should be 60");
-
-      await token.decreaseApproval(accounts[1], 40);
-
-      amountToSpend = await token.allowance.call(accounts[0], accounts[1]);
-
-      assert.equal(amountToSpend.valueOf(), 20, "should be 20");
-
-    });
+/*
 
     it('should tranfer from spender address', async () => {
       await token.transferFrom(accounts[0], accounts[2], 20, {from: accounts[1]});

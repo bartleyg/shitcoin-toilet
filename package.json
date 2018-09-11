@@ -21,6 +21,8 @@
   },
   "homepage": "https://github.com/bartleyg/shitcoin-toilet#readme",
   "dependencies": {
-    "openzeppelin-solidity": "1.12.0"
+    "ganache-cli": "^6.1.8",
+    "openzeppelin-solidity": "1.12.0",
+    "truffle-hdwallet-provider": "^1.0.0-web3one.0"
   }
 }
