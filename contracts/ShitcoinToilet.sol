@@ -49,7 +49,15 @@ contract ShitcoinToilet is DetailedERC20, MintableToken, ERC223BasicToken, ERC22
     emit Transfer(address(0), _to, _amount);
     return true;
   }
-
+  /*
+  function userBurnERC223(uint256 _amount) public {
+    require(_amount <= balances[msg.sender]);
+    balances[msg.sender] = balances[msg.sender].sub(_amount);
+    totalSupply_ = totalSupply_.sub(_amount);
+    emit Burn(msg.sender, _amount);
+    emit Transfer(msg.sender, address(0), _amount);
+  }
+  */
   // handler called when an ERC223 token is sent to this contract
   function tokenFallback(address _from, uint256 _value, bytes _data) public {}
 

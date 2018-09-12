@@ -11,9 +11,10 @@ contract('ShitcoinToilet', (accounts) => {
     token = await ERC20Mock.new();
     token2 = await ERC20Mock.new();
     shitcoinToilet = await ShitcoinToilet.new();
+    shitcoinToilet2 = await ShitcoinToilet.new();
   });
 
-  it('should initialize ERC20 mock tokens', async () => {
+  it('initialize ERC20 mock tokens', async () => {
     let supply = await token.totalSupply.call();
     assert.equal(supply.valueOf(), 0, 'should be 0');
 
@@ -22,7 +23,7 @@ contract('ShitcoinToilet', (accounts) => {
 
   });
 
-  it('should mint ERC20 mock tokens', async () => {
+  it('mint ERC20 mock tokens', async () => {
     await token.mint(user, 1000);
 
     let supply = await token.totalSupply.call();
@@ -45,7 +46,7 @@ contract('ShitcoinToilet', (accounts) => {
     assert.equal(userBalance.valueOf(), 17, 'should be 17');
   });
 
-  it('should initialize ShitcoinToilet token', async () => {
+  it('initialize ShitcoinToilet token', async () => {
     let name = await shitcoinToilet.name.call();
     assert.equal(name, '💩COIN', 'should be 💩COIN');
 
@@ -56,11 +57,11 @@ contract('ShitcoinToilet', (accounts) => {
     assert.equal(supply.valueOf(), 0, 'should be 0');
   });
 
-  it('should approve, toilet flush, mint tokens at ShitcoinToilet', async () => {
+  it('approve, toilet flush, mint tokens at ShitcoinToilet', async () => {
     let userBalance = await token.balanceOf.call(user);
-    await token.approve(shitcoinToilet.address, userBalance, {from: user});
+    await token.approve(shitcoinToilet.address, Number.MAX_SAFE_INTEGER, {from: user});
     let amountToSpend = await token.allowance.call(user, shitcoinToilet.address);
-    assert.equal(amountToSpend.valueOf(), 1000, "should be 1000");
+    assert.equal(amountToSpend.valueOf(), Number.MAX_SAFE_INTEGER, 'should be large number');
 
     let shitcoinBalance = await shitcoinToilet.balanceOf.call(user);
     assert.equal(shitcoinBalance.valueOf(), 0, 'should be 0');
@@ -84,34 +85,45 @@ contract('ShitcoinToilet', (accounts) => {
 
   });
 
+  it('transfer flushed token from contract to external address', async () => {
+    await shitcoinToilet.contractTransfer(token.address, accounts[2], 500, {from: owner});
+    let externalBalance = await token.balanceOf.call(accounts[2]);
+    assert.equal(externalBalance.valueOf(), 500, 'should be 500');
 
-/*
-
-    it('should tranfer from spender address', async () => {
-      await token.transferFrom(accounts[0], accounts[2], 20, {from: accounts[1]});
-
-      let balance = await token.balanceOf.call(accounts[2]);
-
-      assert.equal(balance.valueOf(), 20, "should be 20");
-    });
+    let contractBalanceOfToken = await token.balanceOf.call(shitcoinToilet.address);
+    assert.equal(contractBalanceOfToken.valueOf(), 500, 'should be 500');
 
   });
 
-  it('should not transfer to account, no enough balance', async () => {
-    await expectThrow(token.transfer(accounts[2], 10000));
-    let ownerBalance = await token.balanceOf.call(owner);
-    assert.equal(ownerBalance.valueOf(), 980, "should be 980");
+  it('user transfer ERC223 💩COIN to another address', async () => {
+    let userShitcoinBalance = await shitcoinToilet.balanceOf.call(user);
+    assert.equal(userShitcoinBalance.valueOf(), 1000, 'should be 1000');
+
+    await shitcoinToilet.transfer(accounts[2], 200, {from: user});
+    let externalBalance = await shitcoinToilet.balanceOf.call(accounts[2]);
+    assert.equal(externalBalance.valueOf(), 200, 'should be 200');
+    let userBalance = await shitcoinToilet.balanceOf.call(user);
+    assert.equal(userBalance.valueOf(), 800, 'should be 800');
+
   });
 
-  it('should not allow tranfer eth directly to the token contract', async () => {
-    try {
-      await expectThrow(web3.eth.sendTransaction({from: accounts[0], to: token.address, value: 10}));
-    } catch (error) {
-      const revert = error.message.search('revert') >= 0;
-      assert.equal(revert, true, "should be true");
-      return;
-    }
+  it('approve, toilet flush, mint ERC223 💩COIN at ShitcoinToilet2', async () => {
+    await shitcoinToilet.approve(shitcoinToilet2.address, 800, {from: user});
+    let amountToSpend = await shitcoinToilet.allowance.call(user, shitcoinToilet2.address);
+    assert.equal(amountToSpend.valueOf(), 800, 'should be 800');
+
+    let shitcoinBalance2 = await shitcoinToilet2.balanceOf.call(user);
+    assert.equal(shitcoinBalance2.valueOf(), 0, 'should be 0');
+
+    await shitcoinToilet2.toilet(shitcoinToilet.address, 300, {from: user});
+
+    let contractBalanceOfshitcoinToiletToken =
+      await shitcoinToilet.balanceOf.call(shitcoinToilet2.address);
+    assert.equal(contractBalanceOfshitcoinToiletToken.valueOf(), 300, 'should be 300');
+
+    let userBalanceOfToken = await shitcoinToilet.balanceOf.call(user);
+    assert.equal(userBalanceOfToken.valueOf(), 500, 'should be 500');
+
   });
-*/
 
 });
