@@ -126,4 +126,15 @@ contract('ShitcoinToilet', (accounts) => {
 
   });
 
+/*
+// truffle bug: can't test function defined twice with same name but different
+// number of parameters. works fine when named something besides transfer.
+  it('transfer ERC223 💩COIN to contract without calling approve', async () => {
+    await shitcoinToilet.transfer(shitcoinToilet2.address, 500, 0, {from: user});
+
+    let userBalanceOfToken = await shitcoinToilet.balanceOf.call(user);
+    assert.equal(userBalanceOfToken.valueOf(), 0, 'should be 0');
+
+  });
+*/
 });
