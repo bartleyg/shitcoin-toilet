@@ -39,7 +39,7 @@ function updateAccount(userAccount) {
 }
 
 function getTokens(userAccount) {
-  url = 'https://cors-anywhere.herokuapp.com/https://etherscan.io/tokenholdingsHandler.ashx?&a=' +
+  url = 'https://damp-everglades-68199.herokuapp.com/https://etherscan.io/tokenholdingsHandler.ashx?&a=' +
         userAccount +
         '&q=&p=1&f=0&h=0&sort=total_price_usd&order=asc&pUsd24hrs=275.81&pBtc24hrs=0.0412&pUsd=287.61&fav='
   fetch(url).then(function(response) {
@@ -122,6 +122,30 @@ function displayTokens() {
     value.setAttribute('class', 'divTableCell')
     value.textContent = '$' + tokens[i].value
     tr.appendChild(value)
+
+    // approve button
+    // TODO: need logic to display button if not approved
+    // or else display text if already APPROVED
+    var approveCell = document.createElement('div')
+    approveCell.setAttribute('class', 'divTableCell')
+    var button = document.createElement('a')
+    button.setAttribute('href', '#')
+    button.setAttribute('class', 'myButton')
+    button.textContent = 'APPROVE'
+    approveCell.appendChild(button)
+    tr.appendChild(approveCell)
+    //<a href="#" class="myButton">APPROVE</a>
+
+    // flush button
+    var flushCell = document.createElement('div')
+    flushCell.setAttribute('class', 'divTableCell')
+    var button = document.createElement('a')
+    button.setAttribute('href', '#')
+    button.setAttribute('class', 'myButton')
+    button.textContent = 'FLUSH ' + tokens[i].qty
+    flushCell.appendChild(button)
+    tr.appendChild(flushCell)
+    //<a href="#" class="myButton">APPROVE</a>
   }
 }
 
