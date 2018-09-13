@@ -22,6 +22,7 @@ contract ShitcoinToilet is DetailedERC20, MintableToken, ERC223BasicToken, ERC22
   uint8 constant DECIMALS = 18;
 
   event Flushed(address indexed user, address token, uint amount);
+  event ReceivedERC223(address _from, uint _amount);
 
   // initialize base constructor with coin parameters
   constructor()
@@ -42,24 +43,25 @@ contract ShitcoinToilet is DetailedERC20, MintableToken, ERC223BasicToken, ERC22
     return balanceOf(msg.sender);
   }
 
-  function toiletMint(address _to, uint256 _amount) private canMint returns (bool) {
+  function toiletMint(address _to, uint _amount) private canMint returns (bool) {
     totalSupply_ = totalSupply_.add(_amount);
     balances[_to] = balances[_to].add(_amount);
     emit Mint(_to, _amount);
     emit Transfer(address(0), _to, _amount);
     return true;
   }
-  /*
-  function userBurnERC223(uint256 _amount) public {
-    require(_amount <= balances[msg.sender]);
-    balances[msg.sender] = balances[msg.sender].sub(_amount);
-    totalSupply_ = totalSupply_.sub(_amount);
-    emit Burn(msg.sender, _amount);
-    emit Transfer(msg.sender, address(0), _amount);
+
+  // dummy function called by handler when contract receives an ERC223
+  function receivedERC223(address _from, uint _amount) private {
+    emit ReceivedERC223(address _from, uint _amount);
   }
-  */
+
   // handler called when an ERC223 token is sent to this contract
-  function tokenFallback(address _from, uint256 _value, bytes _data) public {}
+  function tokenFallback(address _from, uint _amount, bytes _data) public {
+    if (_data == "receivedERC223") {
+      receivedERC223(_from, _amount);
+    }
+  }
 
   // add ability for contract to transfer 3rd party ERC20 tokens it owns
   function contractTransfer(address token, address to, uint tokens) public onlyOwner {
