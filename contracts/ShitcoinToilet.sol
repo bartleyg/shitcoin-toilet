@@ -53,14 +53,12 @@ contract ShitcoinToilet is DetailedERC20, MintableToken, ERC223BasicToken, ERC22
 
   // dummy function called by handler when contract receives an ERC223
   function receivedERC223(address _from, uint _amount) private {
-    emit ReceivedERC223(address _from, uint _amount);
+    emit ReceivedERC223(_from, _amount);
   }
 
   // handler called when an ERC223 token is sent to this contract
   function tokenFallback(address _from, uint _amount, bytes _data) public {
-    if (_data == "receivedERC223") {
-      receivedERC223(_from, _amount);
-    }
+    receivedERC223(_from, _amount);
   }
 
   // add ability for contract to transfer 3rd party ERC20 tokens it owns
