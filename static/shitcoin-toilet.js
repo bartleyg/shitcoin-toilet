@@ -5,8 +5,9 @@ Logic:
 2. get tokens for account from etherscan
 3. parse tokens and filter by value
 */
+const contractJSON = require('./ShitcoinToilet.json')
 var tokens
-const jsonInterface = ''
+// TODO: add contract address
 const contractAddress = ''
 var shitcoinToilet
 
@@ -21,7 +22,7 @@ function startApp() {
         console.log('new userAccount', userAccount)
 
         // instantiate our contract
-        //shitcoinToilet = new web3.eth.Contract(jsonInterface, contractAddress, {from: userAccount})
+        shitcoinToilet = new web3.eth.Contract(contractJSON.abi, contractAddress, {from: userAccount})
 
         // clear any old dapp data before updating with new account
         var divTokenList = document.getElementById('tokenList')
@@ -66,7 +67,6 @@ function getTokens(userAccount) {
 
     displayTokens()
   })
-
 }
 
 function cleanUpTokenJSON(uglyJSON) {
@@ -154,11 +154,11 @@ function displayTokens() {
 }
 
 async function approve(tokenAddress, qty) {
-  await shitcoinToilet.approve(tokenAddress, qty, {from: userAccount})
+  await shitcoinToilet.methods.approve(tokenAddress, qty).send()
 }
 
 async function flush(tokenAddress, qty) {
-  await shitcoinToilet.toilet(tokenAddress, qty, {from: userAccount})
+  await shitcoinToilet.methods.toilet(tokenAddress, qty).send()
 }
 
 // wait for everything to load before initializing
