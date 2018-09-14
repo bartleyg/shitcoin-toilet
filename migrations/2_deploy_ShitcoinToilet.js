@@ -1,6 +1,6 @@
-var ShitcoinToilet = artifacts.require("ShitcoinToilet");
+const ShitcoinToilet = artifacts.require("ShitcoinToilet");
 
-module.exports = function(deployer) {
+module.exports = async function(deployer) {
   // deployment steps
-  deployer.deploy(ShitcoinToilet);
+  await deployer.deploy(ShitcoinToilet);
 };

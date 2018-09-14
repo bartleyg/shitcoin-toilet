@@ -7,8 +7,6 @@ Logic:
 */
 const contractJSON = require('./ShitcoinToilet.json')
 var tokens
-// TODO: add contract address
-const contractAddress = ''
 var shitcoinToilet
 
 function startApp() {
@@ -21,8 +19,11 @@ function startApp() {
         userAccount = accounts[0]
         console.log('new userAccount', userAccount)
 
+        const networkId = await web3.eth.net.getId()
+        const deployedAddress = contractJSON.networks[networkId].address
+
         // instantiate our contract
-        shitcoinToilet = new web3.eth.Contract(contractJSON.abi, contractAddress, {from: userAccount})
+        shitcoinToilet = new web3.eth.Contract(contractJSON.abi, deployedAddress, {from: userAccount})
 
         // clear any old dapp data before updating with new account
         var divTokenList = document.getElementById('tokenList')
