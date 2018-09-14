@@ -6,6 +6,9 @@ Logic:
 3. parse tokens and filter by value
 */
 var tokens
+const jsonInterface = ''
+const contractAddress = ''
+var shitcoinToilet
 
 function startApp() {
   var userAccount
@@ -16,6 +19,9 @@ function startApp() {
       if (accounts[0] !== userAccount) {
         userAccount = accounts[0]
         console.log('new userAccount', userAccount)
+
+        // instantiate our contract
+        //shitcoinToilet = new web3.eth.Contract(jsonInterface, contractAddress, {from: userAccount})
 
         // clear any old dapp data before updating with new account
         var divTokenList = document.getElementById('tokenList')
@@ -129,24 +135,30 @@ function displayTokens() {
     var approveCell = document.createElement('div')
     approveCell.setAttribute('class', 'divTableCell')
     var button = document.createElement('a')
-    button.setAttribute('href', '#')
+    button.onclick = approve(tokens[i].address, tokens[i].qty)
     button.setAttribute('class', 'myButton')
     button.textContent = 'APPROVE'
     approveCell.appendChild(button)
     tr.appendChild(approveCell)
-    //<a href="#" class="myButton">APPROVE</a>
 
     // flush button
     var flushCell = document.createElement('div')
     flushCell.setAttribute('class', 'divTableCell')
     var button = document.createElement('a')
-    button.setAttribute('href', '#')
+    button.onclick = flush(tokens[i].address, tokens[i].qty)
     button.setAttribute('class', 'myButton')
     button.textContent = 'FLUSH ' + tokens[i].qty
     flushCell.appendChild(button)
     tr.appendChild(flushCell)
-    //<a href="#" class="myButton">APPROVE</a>
   }
+}
+
+async function approve(tokenAddress, qty) {
+  await shitcoinToilet.approve(tokenAddress, qty, {from: userAccount})
+}
+
+async function flush(tokenAddress, qty) {
+  await shitcoinToilet.toilet(tokenAddress, qty, {from: userAccount})
 }
 
 // wait for everything to load before initializing
