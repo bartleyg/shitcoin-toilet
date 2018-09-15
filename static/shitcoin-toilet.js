@@ -14,12 +14,12 @@ function startApp() {
   // function runs every 1/10th sec
   var accountInterval = setInterval(function() {
     // check if metamask account has changed
-    web3.eth.getAccounts().then(function(accounts) {
+    web3.eth.getAccounts().then(async function(accounts) {
       if (accounts[0] !== userAccount) {
         userAccount = accounts[0]
         console.log('new userAccount', userAccount)
 
-        const networkId = await web3.eth.net.getId()
+        const networkId = await web3.eth.net.getId() // await?
         const deployedAddress = contractJSON.networks[networkId].address
 
         // instantiate our contract
@@ -61,12 +61,11 @@ function getTokens(userAccount) {
     var uglyJSON = $(tokenListHTML).tableToJSON({ignoreHiddenRows: false, onlyColumns: [1, 3, 5],
                 headings: ['address', 'qtyname', 'value']})
     // check for "No token found"
-    if (uglyJSON[0].address !== 'No token found')
+    if (uglyJSON[0].address !== 'No token found') {
       tokens = cleanUpTokenJSON(uglyJSON)
-    else
+      displayTokens()
+    } else
       console.log('user has no tokens')
-
-    displayTokens()
   })
 }
 
