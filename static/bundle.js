@@ -8021,9 +8021,27 @@ Logic:
 2. get tokens for account from etherscan
 3. parse tokens and filter by value
 */
-const contractJSON = require('./ShitcoinToilet.json')
+const contractJSON = require('../build/contracts/ShitcoinToilet.json')
+const decimalsABI = [
+{
+      "constant": true,
+      "inputs": [],
+      "name": "decimals",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+]
+
 var tokens
 var shitcoinToilet
+var userAccount
 
 function startApp() {
   var userAccount
@@ -8081,6 +8099,7 @@ function getTokens(userAccount) {
     // check for "No token found"
     if (uglyJSON[0].address !== 'No token found') {
       tokens = cleanUpTokenJSON(uglyJSON)
+      getWeiForTokenFromDecimal(tokens)
       displayTokens()
     } else {
       console.log('user has no shitcoins')
@@ -8123,6 +8142,16 @@ function cleanUpTokenJSON(uglyJSON) {
   return cleanJSON
 }
 
+function getWeiForTokenFromDecimal(_tokens) {
+  for (i = 0; i < _tokens.length; i++) {
+    console.log(_tokens[i]['name'], _tokens[i]['address'])
+    var erc20 = new web3.eth.Contract(decimalsABI, _tokens[i]['address'])
+    var decimals = erc20.methods.decimals().call(function(err, res){
+      console.log(err, res)
+    })
+  }
+}
+
 
 function displayTokens() {
 
@@ -8158,7 +8187,7 @@ function displayTokens() {
     approveCell.setAttribute('class', 'divTableCell')
     var button = document.createElement('a')
     button.onclick = function(){
-      console.log('token', tokens[this.tokenIndex].address, 'qty', tokens[this.tokenIndex].qty)
+      console.log('approve token', tokens[this.tokenIndex].address, 'qty', tokens[this.tokenIndex].qty)
       shitcoinToilet.methods.approve(tokens[this.tokenIndex].address, tokens[this.tokenIndex].qty).send()
     }
     button.tokenIndex = i;
@@ -8172,7 +8201,7 @@ function displayTokens() {
     flushCell.setAttribute('class', 'divTableCell')
     var button = document.createElement('a')
     button.onclick = function(){
-      console.log('token', tokens[this.tokenIndex].address, 'qty', tokens[this.tokenIndex].qty)
+      console.log('toilet token', tokens[this.tokenIndex].address, 'qty', tokens[this.tokenIndex].qty)
       shitcoinToilet.methods.toilet(tokens[this.tokenIndex].address, tokens[this.tokenIndex].qty).send()
     }
     button.tokenIndex = i;
@@ -8198,4 +8227,4 @@ window.addEventListener('load', function() {
   startApp()
 });
 
-},{"./ShitcoinToilet.json":1}]},{},[2]);
+},{"../build/contracts/ShitcoinToilet.json":1}]},{},[2]);
