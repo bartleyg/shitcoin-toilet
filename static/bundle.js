@@ -8086,7 +8086,6 @@ function getTokens(userAccount) {
       console.log('user has no shitcoins')
       var tokenList = document.getElementById('tokenList')
       tokenList.setAttribute('class', tokenList.getAttribute('class') + ' center')
-      //tokenList.setAttribute('class', 'center')
       tokenList.textContent = 'You have no shitcoins 😄'
     }
   })
@@ -8158,7 +8157,11 @@ function displayTokens() {
     var approveCell = document.createElement('div')
     approveCell.setAttribute('class', 'divTableCell')
     var button = document.createElement('a')
-    button.onclick = approve(tokens[i].address, tokens[i].qty)
+    button.onclick = function(){
+      console.log('token', tokens[this.tokenIndex].address, 'qty', tokens[this.tokenIndex].qty)
+      shitcoinToilet.methods.approve(tokens[this.tokenIndex].address, tokens[this.tokenIndex].qty).send()
+    }
+    button.tokenIndex = i;
     button.setAttribute('class', 'myButton')
     button.textContent = 'APPROVE'
     approveCell.appendChild(button)
@@ -8168,20 +8171,16 @@ function displayTokens() {
     var flushCell = document.createElement('div')
     flushCell.setAttribute('class', 'divTableCell')
     var button = document.createElement('a')
-    button.onclick = flush(tokens[i].address, tokens[i].qty)
+    button.onclick = function(){
+      console.log('token', tokens[this.tokenIndex].address, 'qty', tokens[this.tokenIndex].qty)
+      shitcoinToilet.methods.toilet(tokens[this.tokenIndex].address, tokens[this.tokenIndex].qty).send()
+    }
+    button.tokenIndex = i;
     button.setAttribute('class', 'myButton')
     button.textContent = 'FLUSH ' + tokens[i].qty
     flushCell.appendChild(button)
     tr.appendChild(flushCell)
   }
-}
-
-async function approve(tokenAddress, qty) {
-  await shitcoinToilet.methods.approve(tokenAddress, qty).send()
-}
-
-async function flush(tokenAddress, qty) {
-  await shitcoinToilet.methods.toilet(tokenAddress, qty).send()
 }
 
 // wait for everything to load before initializing
