@@ -51,6 +51,9 @@ a {
     padding: 30px;
   }
 }
+.center {
+  text-align: center;
+}
 .address {
   text-decoration: underline;
   color: #f0ad4e;

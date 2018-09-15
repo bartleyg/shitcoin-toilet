@@ -21,6 +21,8 @@ function startApp() {
 
         const networkId = await web3.eth.net.getId() // await?
         const deployedAddress = contractJSON.networks[networkId].address
+        console.log('networkId', networkId)
+        console.log('deployedAddress', deployedAddress)
 
         // instantiate our contract
         shitcoinToilet = new web3.eth.Contract(contractJSON.abi, deployedAddress, {from: userAccount})
@@ -64,8 +66,12 @@ function getTokens(userAccount) {
     if (uglyJSON[0].address !== 'No token found') {
       tokens = cleanUpTokenJSON(uglyJSON)
       displayTokens()
-    } else
-      console.log('user has no tokens')
+    } else {
+      console.log('user has no shitcoins')
+      var tokenList = document.getElementById('tokenList')
+      tokenList.setAttribute('class', tokenList.getAttribute('class') + ' center')
+      tokenList.textContent = 'You have no shitcoins 😄'
+    }
   })
 }
 
