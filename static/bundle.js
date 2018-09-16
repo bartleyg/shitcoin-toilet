@@ -8038,13 +8038,33 @@ const decimalsABI = [
       "type": "function"
     },
 ]
+const balanceABI = [
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_who",
+        "type": "address"
+      }
+    ],
+    "name": "balanceOf",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+]
 
 var tokens
 var shitcoinToilet
 var userAccount
 
 function startApp() {
-  var userAccount
   // function runs every 1/10th sec
   var accountInterval = setInterval(function() {
     // check if metamask account has changed
@@ -8092,14 +8112,14 @@ function getTokens(userAccount) {
   .then(function(json) {
     return json.layout
   })
-  .then(function(tokenListHTML) {
+  .then(async function(tokenListHTML) {
     tokenListHTML = '<table>' + tokenListHTML + '</table>'
     var uglyJSON = $(tokenListHTML).tableToJSON({ignoreHiddenRows: false, onlyColumns: [1, 3, 5],
                 headings: ['address', 'qtyname', 'value']})
     // check for "No token found"
     if (uglyJSON[0].address !== 'No token found') {
       tokens = cleanUpTokenJSON(uglyJSON)
-      getWeiForTokenFromDecimal(tokens)
+      await getWeiTokenBalance()
       displayTokens()
     } else {
       console.log('user has no shitcoins')
@@ -8142,12 +8162,13 @@ function cleanUpTokenJSON(uglyJSON) {
   return cleanJSON
 }
 
-function getWeiForTokenFromDecimal(_tokens) {
-  for (i = 0; i < _tokens.length; i++) {
-    console.log(_tokens[i]['name'], _tokens[i]['address'])
-    var erc20 = new web3.eth.Contract(decimalsABI, _tokens[i]['address'])
-    var decimals = erc20.methods.decimals().call(function(err, res){
-      console.log(err, res)
+function getWeiTokenBalance() {
+  for (let i = 0; i < tokens.length; i++) {
+    //console.log(_tokens[i]['name'], _tokens[i]['address'])
+    var erc20 = new web3.eth.Contract(balanceABI, tokens[i]['address'])
+    erc20.methods.balanceOf(userAccount).call(function(error, result){
+      tokens[i]['qty'] = result
+      console.log(tokens[i]['name'], 'qty', tokens[i]['qty'])
     })
   }
 }

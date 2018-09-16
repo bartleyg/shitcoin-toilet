@@ -22,13 +22,33 @@ const decimalsABI = [
       "type": "function"
     },
 ]
+const balanceABI = [
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_who",
+        "type": "address"
+      }
+    ],
+    "name": "balanceOf",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+]
 
 var tokens
 var shitcoinToilet
 var userAccount
 
 function startApp() {
-  var userAccount
   // function runs every 1/10th sec
   var accountInterval = setInterval(function() {
     // check if metamask account has changed
@@ -76,14 +96,14 @@ function getTokens(userAccount) {
   .then(function(json) {
     return json.layout
   })
-  .then(function(tokenListHTML) {
+  .then(async function(tokenListHTML) {
     tokenListHTML = '<table>' + tokenListHTML + '</table>'
     var uglyJSON = $(tokenListHTML).tableToJSON({ignoreHiddenRows: false, onlyColumns: [1, 3, 5],
                 headings: ['address', 'qtyname', 'value']})
     // check for "No token found"
     if (uglyJSON[0].address !== 'No token found') {
       tokens = cleanUpTokenJSON(uglyJSON)
-      getWeiForTokenFromDecimal(tokens)
+      await getWeiTokenBalance()
       displayTokens()
     } else {
       console.log('user has no shitcoins')
@@ -104,15 +124,15 @@ function cleanUpTokenJSON(uglyJSON) {
     json['name'] = qtyname[1].trim()
     if (json['name'] === 'ETH')
       continue  // ETH is no shitcoin
-    json['qty'] = qtyname[0]
+    json['etherscanQty'] = qtyname[0]
     json['address'] = uglyJSON[i].address.slice(-42)
     // limit token quantity to 100k to exclude things like Augur SHARE tokens in the billions+
     // '-' are known worthless nontrading tokens
-    if (uglyJSON[i].value === '-' && json['qty'] < 100000) {
+    if (uglyJSON[i].value === '-' && json['etherscanQty'] < 100000) {
       json['value'] = '0'
       cleanJSON.push(json)
     }
-    else if (json['qty'] < 100000) {
+    else if (json['etherscanQty'] < 100000) {
       // remove formatting to get the USD value of tokens
       var value = uglyJSON[i].value.split('@')[0].replace(/\$/, '')
       // only keep coin if total value user holds is less than $1
@@ -126,12 +146,13 @@ function cleanUpTokenJSON(uglyJSON) {
   return cleanJSON
 }
 
-function getWeiForTokenFromDecimal(_tokens) {
-  for (i = 0; i < _tokens.length; i++) {
-    console.log(_tokens[i]['name'], _tokens[i]['address'])
-    var erc20 = new web3.eth.Contract(decimalsABI, _tokens[i]['address'])
-    var decimals = erc20.methods.decimals().call(function(err, res){
-      console.log(err, res)
+function getWeiTokenBalance() {
+  for (let i = 0; i < tokens.length; i++) {
+    //console.log(_tokens[i]['name'], _tokens[i]['address'])
+    var erc20 = new web3.eth.Contract(balanceABI, tokens[i]['address'])
+    erc20.methods.balanceOf(userAccount).call(function(error, result){
+      tokens[i]['qty'] = result
+      console.log(tokens[i]['name'], 'qty', tokens[i]['qty'])
     })
   }
 }
