@@ -30,6 +30,9 @@
 const HDWalletProvider = require("truffle-hdwallet-provider");
 const GanacheCLI = require("ganache-cli");
 const infuraKey = process.env.INFURA_API_KEY;
+// if wrong address shows up when 'truffle migrate' then the MNEMONIC
+// environment variable has not been set for the terminal session.
+// do so by export MNEMONIC="12 words from metamask"
 const mnemonic = process.env.MNEMONIC;
 
 module.exports = {
@@ -49,7 +52,7 @@ module.exports = {
       // tab if you use this network and you must also set the `host`, `port` and `network_id`
       // options below to some value.
       //
-    /*development: {
+    development: {
       get provider() {
         if (!provider) {
           provider = GanacheCLI.provider({total_accounts: 25})
@@ -65,7 +68,7 @@ module.exports = {
       //port: 7545,            // Standard Ethereum port (default: none)
       network_id: "*",       // Any network (default: none)
     },
-    */
+
     // Another network with more advanced options...
     //advanced: {
       // port: 8777,             // Custom port
@@ -86,19 +89,22 @@ module.exports = {
       // timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
       // skipDryRun: true     // Skip dry run before migrations? (default: false for public nets )
     //},
-    ropsten: {
-      provider: () => new HDWalletProvider(mnemonic, `https://ropsten.infura.io`),
-      network_id: 3,
-      gas: 5500000,           // Default gas to send per transaction
-      gasPrice: 10000000000,  // 10 gwei (default: 20 gwei)
-      confirmations: 2,       // # of confs to wait between deployments. (default: 0)
-      timeoutBlocks: 200,     // # of blocks before a deployment times out  (minimum/default: 50)
-      skipDryRun: true        // Skip dry run before migrations? (default: false for public nets )
-    },
     rinkeby: {
-      provider: () => new HDWalletProvider(mnemonic, `https://rinkeby.infura.io`, 3),
+      provider: () => new HDWalletProvider(mnemonic, `https://rinkeby.infura.io/${infuraKey}`, 3),
       network_id: 4,
+      gasPrice: 4000000000, // 4 gwei
+      gas: 6700000,
     },
+    mainnet: {
+      provider: () => new HDWalletProvider(process.env.MNEMONIC,
+        `https://api.orinocopay.com:8546`, 1),
+      network_id: 1,
+      gasPrice: 7000000000, // 7 gwei
+      gas: 2000000,        // Gas sent with each transaction (default: ~6700000)
+      confirmations: 6,    // # of confs to wait between deployments. need >2 for infura mainnet
+      timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
+      skipDryRun: false    // Skip dry run before migrations? (default: false for public nets )
+    }
     // Useful for private networks
     //private: {
       // provider: () => new HDWalletProvider(mnemonic, `https://network.io`),
@@ -113,17 +119,17 @@ module.exports = {
   //},
 
   // Configure your compilers
-  //compilers: {
-    //solc: {
-      // version: "0.4.24",    // Fetch exact version from solc-bin (default: truffle's version)
+  compilers: {
+    solc: {
+       version: "0.4.25",    // Fetch exact version from solc-bin (default: truffle's version)
       // docker: true,        // Use "0.5.1" you've installed locally with docker (default: false)
-      // settings: {          // See the solidity docs for advice about optimization and evmVersion
-      //  optimizer: {
-      //    enabled: false,
-      //    runs: 200
-      //  },
+       settings: {          // See the solidity docs for advice about optimization and evmVersion
+        optimizer: {
+          enabled: true,
+          runs: 200
+        },
       //  evmVersion: "byzantium"
-      // }
-    //}
-  //}
+       }
+    }
+  }
 }
