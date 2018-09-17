@@ -5,65 +5,9 @@ Logic:
 2. get tokens for account from etherscan
 3. parse tokens and filter by value
 */
+var Web3 = require('web3')
 const contractJSON = require('../build/contracts/ShitcoinToilet.json')
-const usedERC20ABI = [
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "_owner",
-        "type": "address"
-      },
-      {
-        "name": "_spender",
-        "type": "address"
-      }
-    ],
-    "name": "allowance",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "_who",
-        "type": "address"
-      }
-    ],
-    "name": "balanceOf",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "decimals",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint8"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-]
+const detailedERC20 = require('../build/contracts/DetailedERC20.json')
 
 var tokens
 var shitcoinToilet
@@ -79,7 +23,7 @@ function startApp() {
         userAccount = accounts[0]
         console.log('new userAccount', userAccount)
 
-        const networkId = await web3.eth.net.getId() // await?
+        const networkId = await web3.eth.net.getId()
         deployedAddress = contractJSON.networks[networkId].address
         console.log('networkId', networkId)
         console.log('deployedAddress', deployedAddress)
@@ -93,6 +37,8 @@ function startApp() {
             divTokenList.removeChild(divTokenList.firstChild)
         }
         updateAccount(userAccount)
+        getTokens(userAccount)
+        getPastFlushEvents()
       }
     })
   }, 100); // run every 100 ms
@@ -104,8 +50,6 @@ function updateAccount(userAccount) {
     document.getElementById('address').textContent = 'Please sign into MetaMask ↗️'
   else
     document.getElementById('address').textContent = userAccount
-
-  getTokens(userAccount)
 }
 
 function getTokens(userAccount) {
@@ -194,7 +138,7 @@ function displayTokenNameValue() {
 function getWeiTokenBalance() {
   for (let i = 0; i < tokens.length; i++) {
     //console.log(_tokens[i]['name'], _tokens[i]['address'])
-    tokens[i]['erc20'] = new web3.eth.Contract(usedERC20ABI, tokens[i]['address'])
+    tokens[i]['erc20'] = new web3.eth.Contract(detailedERC20.abi, tokens[i]['address'])
     // get token balance and decimals to correctly display token quantity
     tokens[i].erc20.methods.balanceOf(userAccount).call(function(error, balance){
       if (balance === '0' || balance === undefined) {
@@ -272,9 +216,17 @@ function displayFlushButton(tr, token) {
   }
   button.tokenIndex = i;
   button.setAttribute('class', 'myButton')
-  button.textContent = 'FLUSH FOR 💩COIN'
+  button.textContent = 'FLUSH for 💩COIN'
   flushCell.appendChild(button)
   tr.appendChild(flushCell)
+}
+
+function getPastFlushEvents() {
+  shitcoinToilet.getPastEvents('Flushed')
+  .then(function(events){
+    console.log(events.length, 'events')
+    console.log(events) // array of past event objects
+  })
 }
 
 // wait for everything to load before initializing
@@ -290,4 +242,4 @@ window.addEventListener('load', function() {
     console.log('browser does not have injected web3')
   }
   startApp()
-});
+})
