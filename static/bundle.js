@@ -8065,6 +8065,20 @@ const usedERC20ABI = [
     "stateMutability": "view",
     "type": "function"
   },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "decimals",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
 ]
 
 var tokens
@@ -8197,19 +8211,23 @@ function getWeiTokenBalance() {
   for (let i = 0; i < tokens.length; i++) {
     //console.log(_tokens[i]['name'], _tokens[i]['address'])
     tokens[i]['erc20'] = new web3.eth.Contract(usedERC20ABI, tokens[i]['address'])
+    // get token balance and decimals to correctly display token quantity
     tokens[i].erc20.methods.balanceOf(userAccount).call(function(error, balance){
       if (balance === '0' || balance === undefined) {
         deleteRow(tokens[i].address)  // delete token's html
       } else {
-        tokens[i].qty = balance
-        console.log(tokens[i].name, tokens[i].address, 'qty', tokens[i].qty)
-        checkTokenAvailable(tokens[i])
+        tokens[i]['wei'] = balance
+        tokens[i].erc20.methods.decimals().call(function(error, decimals){
+          tokens[i].qty = balance / 10**decimals
+          console.log(tokens[i].name, tokens[i].address, 'qty', tokens[i].qty)
+          checkTokenAllowance(tokens[i])
+        })
       }
     })
   }
 }
 
-function checkTokenAvailable(token) {
+function checkTokenAllowance(token) {
   // get the row for this token by address
   let tr = document.getElementById(token.address)
   // token quantity cell
@@ -8224,12 +8242,17 @@ function checkTokenAvailable(token) {
       console.log('allowance error', error)
       deleteRow(token.address)  // delete token's html
     } else {
-      if (allowance < token.qty) {
+      if (allowance < token.wei) {
         displayApproveButton(tr, token)
       } else {
         // display APPROVED
+        var approveCell = document.createElement('div')
+        approveCell.setAttribute('class', 'divTableCell')
+        approveCell.textContent = 'APPROVED'
+        tr.appendChild(approveCell)
         console.log(token.name, 'APPROVED', allowance)
       }
+      displayFlushButton(tr, token)
     }
   })
 }
@@ -8240,9 +8263,6 @@ function deleteRow(address) {
 }
 
 function displayApproveButton(tr, token) {
-  // approve button
-  // TODO: need logic to display button if not approved
-  // or else display text if already APPROVED
   var approveCell = document.createElement('div')
   approveCell.setAttribute('class', 'divTableCell')
   var button = document.createElement('a')
@@ -8268,7 +8288,7 @@ function displayFlushButton(tr, token) {
   }
   button.tokenIndex = i;
   button.setAttribute('class', 'myButton')
-  button.textContent = 'FLUSH ' + token.qty
+  button.textContent = 'FLUSH FOR 💩COIN'
   flushCell.appendChild(button)
   tr.appendChild(flushCell)
 }
