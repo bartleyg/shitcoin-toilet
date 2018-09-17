@@ -8022,23 +8022,30 @@ Logic:
 3. parse tokens and filter by value
 */
 const contractJSON = require('../build/contracts/ShitcoinToilet.json')
-const decimalsABI = [
-{
-      "constant": true,
-      "inputs": [],
-      "name": "decimals",
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint8"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function"
-    },
-]
-const balanceABI = [
+const usedERC20ABI = [
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_owner",
+        "type": "address"
+      },
+      {
+        "name": "_spender",
+        "type": "address"
+      }
+    ],
+    "name": "allowance",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
   {
     "constant": true,
     "inputs": [
@@ -8063,6 +8070,7 @@ const balanceABI = [
 var tokens
 var shitcoinToilet
 var userAccount
+var deployedAddress
 
 function startApp() {
   // function runs every 1/10th sec
@@ -8074,7 +8082,7 @@ function startApp() {
         console.log('new userAccount', userAccount)
 
         const networkId = await web3.eth.net.getId() // await?
-        const deployedAddress = contractJSON.networks[networkId].address
+        deployedAddress = contractJSON.networks[networkId].address
         console.log('networkId', networkId)
         console.log('deployedAddress', deployedAddress)
 
@@ -8112,15 +8120,15 @@ function getTokens(userAccount) {
   .then(function(json) {
     return json.layout
   })
-  .then(async function(tokenListHTML) {
+  .then(function(tokenListHTML) {
     tokenListHTML = '<table>' + tokenListHTML + '</table>'
     var uglyJSON = $(tokenListHTML).tableToJSON({ignoreHiddenRows: false, onlyColumns: [1, 3, 5],
                 headings: ['address', 'qtyname', 'value']})
     // check for "No token found"
     if (uglyJSON[0].address !== 'No token found') {
       tokens = cleanUpTokenJSON(uglyJSON)
-      await getWeiTokenBalance()
-      displayTokens()
+      displayTokenNameValue()
+      getWeiTokenBalance()
     } else {
       console.log('user has no shitcoins')
       var tokenList = document.getElementById('tokenList')
@@ -8140,15 +8148,15 @@ function cleanUpTokenJSON(uglyJSON) {
     json['name'] = qtyname[1].trim()
     if (json['name'] === 'ETH')
       continue  // ETH is no shitcoin
-    json['qty'] = qtyname[0]
+    json['etherscanQty'] = qtyname[0]
     json['address'] = uglyJSON[i].address.slice(-42)
     // limit token quantity to 100k to exclude things like Augur SHARE tokens in the billions+
     // '-' are known worthless nontrading tokens
-    if (uglyJSON[i].value === '-' && json['qty'] < 100000) {
+    if (uglyJSON[i].value === '-' && json['etherscanQty'] < 100000) {
       json['value'] = '0'
       cleanJSON.push(json)
     }
-    else if (json['qty'] < 100000) {
+    else if (json['etherscanQty'] < 100000) {
       // remove formatting to get the USD value of tokens
       var value = uglyJSON[i].value.split('@')[0].replace(/\$/, '')
       // only keep coin if total value user holds is less than $1
@@ -8162,25 +8170,13 @@ function cleanUpTokenJSON(uglyJSON) {
   return cleanJSON
 }
 
-function getWeiTokenBalance() {
-  for (let i = 0; i < tokens.length; i++) {
-    //console.log(_tokens[i]['name'], _tokens[i]['address'])
-    var erc20 = new web3.eth.Contract(balanceABI, tokens[i]['address'])
-    erc20.methods.balanceOf(userAccount).call(function(error, result){
-      tokens[i]['qty'] = result
-      console.log(tokens[i]['name'], 'qty', tokens[i]['qty'])
-    })
-  }
-}
-
-
-function displayTokens() {
-
+function displayTokenNameValue() {
   var tbody = document.getElementById('tokenList')
-
-  for (i = 0; i < tokens.length; i++) {
+  for (let i = 0; i < tokens.length; i++) {
+    // create row for token
     var tr = document.createElement('div')
     tr.setAttribute('class', 'divTableRow')
+    tr.setAttribute('id', tokens[i]['address'])
     tbody.appendChild(tr)
 
     // token name cell
@@ -8189,48 +8185,92 @@ function displayTokens() {
     name.textContent = tokens[i].name
     tr.appendChild(name)
 
-    // token quantity cell
-    var qty = document.createElement('div')
-    qty.setAttribute('class', 'divTableCell')
-    qty.textContent = tokens[i].qty
-    tr.appendChild(qty)
-
     // token value cell
     var value = document.createElement('div')
     value.setAttribute('class', 'divTableCell')
     value.textContent = '$' + tokens[i].value
     tr.appendChild(value)
-
-    // approve button
-    // TODO: need logic to display button if not approved
-    // or else display text if already APPROVED
-    var approveCell = document.createElement('div')
-    approveCell.setAttribute('class', 'divTableCell')
-    var button = document.createElement('a')
-    button.onclick = function(){
-      console.log('approve token', tokens[this.tokenIndex].address, 'qty', tokens[this.tokenIndex].qty)
-      shitcoinToilet.methods.approve(tokens[this.tokenIndex].address, tokens[this.tokenIndex].qty).send()
-    }
-    button.tokenIndex = i;
-    button.setAttribute('class', 'myButton')
-    button.textContent = 'APPROVE'
-    approveCell.appendChild(button)
-    tr.appendChild(approveCell)
-
-    // flush button
-    var flushCell = document.createElement('div')
-    flushCell.setAttribute('class', 'divTableCell')
-    var button = document.createElement('a')
-    button.onclick = function(){
-      console.log('toilet token', tokens[this.tokenIndex].address, 'qty', tokens[this.tokenIndex].qty)
-      shitcoinToilet.methods.toilet(tokens[this.tokenIndex].address, tokens[this.tokenIndex].qty).send()
-    }
-    button.tokenIndex = i;
-    button.setAttribute('class', 'myButton')
-    button.textContent = 'FLUSH ' + tokens[i].qty
-    flushCell.appendChild(button)
-    tr.appendChild(flushCell)
   }
+}
+
+function getWeiTokenBalance() {
+  for (let i = 0; i < tokens.length; i++) {
+    //console.log(_tokens[i]['name'], _tokens[i]['address'])
+    tokens[i]['erc20'] = new web3.eth.Contract(usedERC20ABI, tokens[i]['address'])
+    tokens[i].erc20.methods.balanceOf(userAccount).call(function(error, balance){
+      if (balance === '0' || balance === undefined) {
+        deleteRow(tokens[i].address)  // delete token's html
+      } else {
+        tokens[i].qty = balance
+        console.log(tokens[i].name, tokens[i].address, 'qty', tokens[i].qty)
+        checkTokenAvailable(tokens[i])
+      }
+    })
+  }
+}
+
+function checkTokenAvailable(token) {
+  // get the row for this token by address
+  let tr = document.getElementById(token.address)
+  // token quantity cell
+  var qty = document.createElement('div')
+  qty.setAttribute('class', 'divTableCell')
+  qty.textContent = token.qty
+  tr.appendChild(qty)
+
+  // get token qty allowance for contract from web3
+  token.erc20.methods.allowance(userAccount, deployedAddress).call(function(error, allowance){
+    if (error) {
+      console.log('allowance error', error)
+      deleteRow(token.address)  // delete token's html
+    } else {
+      if (allowance < token.qty) {
+        displayApproveButton(tr, token)
+      } else {
+        // display APPROVED
+        console.log(token.name, 'APPROVED', allowance)
+      }
+    }
+  })
+}
+
+function deleteRow(address) {
+  var tr = document.getElementById(address)
+  tr.parentNode.removeChild(tr)
+}
+
+function displayApproveButton(tr, token) {
+  // approve button
+  // TODO: need logic to display button if not approved
+  // or else display text if already APPROVED
+  var approveCell = document.createElement('div')
+  approveCell.setAttribute('class', 'divTableCell')
+  var button = document.createElement('a')
+  button.onclick = function(){
+    console.log('approve token', token.address, 'qty', token.qty)
+    shitcoinToilet.methods.approve(token.address, token.qty).send()
+  }
+  button.tokenIndex = i;
+  button.setAttribute('class', 'myButton')
+  button.textContent = 'APPROVE'
+  approveCell.appendChild(button)
+  tr.appendChild(approveCell)
+}
+
+function displayFlushButton(tr, token) {
+  // flush button
+  var flushCell = document.createElement('div')
+  flushCell.setAttribute('class', 'divTableCell')
+  var button = document.createElement('a')
+  button.onclick = function(){
+    console.log('toilet token', token.address, 'qty', token.qty)
+    shitcoinToilet.methods.toilet(token.address, token.qty).send()
+  }
+  button.tokenIndex = i;
+  button.setAttribute('class', 'myButton')
+  button.textContent = 'FLUSH ' + token.qty
+  flushCell.appendChild(button)
+  tr.appendChild(flushCell)
 }
 
 // wait for everything to load before initializing
