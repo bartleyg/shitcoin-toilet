@@ -58974,10 +58974,9 @@ function displayApproveButton(tr, token) {
   approveCell.setAttribute('class', 'divTableCell')
   var button = document.createElement('a')
   button.onclick = function(){
-    console.log('approve token', token.address, 'qty', token.qty)
-    shitcoinToilet.methods.approve(token.address, token.qty).send()
+    console.log('approve contract', deployedAddress, 'to spend', token.address, 'wei:', token.wei)
+    token.erc20.methods.approve(deployedAddress, token.wei).send({from: userAccount})
   }
-  button.tokenIndex = i;
   button.setAttribute('class', 'myButton')
   button.textContent = 'APPROVE'
   approveCell.appendChild(button)
@@ -58990,10 +58989,9 @@ function displayFlushButton(tr, token) {
   flushCell.setAttribute('class', 'divTableCell')
   var button = document.createElement('a')
   button.onclick = function(){
-    console.log('toilet token', token.address, 'qty', token.qty)
-    shitcoinToilet.methods.toilet(token.address, token.qty).send()
+    console.log('toilet token', token.address, 'wei:', token.wei)
+    shitcoinToilet.methods.toilet(token.address, token.wei).send()
   }
-  button.tokenIndex = i;
   button.setAttribute('class', 'myButton')
   button.textContent = 'FLUSH for 💩COIN'
   flushCell.appendChild(button)
@@ -59005,10 +59003,16 @@ function getPastFlushEvents() {
   .then(function(events){
     console.log(events.length, 'events')
     console.log(events) // array of past event objects
+    var flushHistory = document.getElementById('pastFlushes')
+    for (var i = 0; i < events.length; i++) {
+      var flush = document.createElement('div')
+      flush.textContent = events[i].user + ' flushed ' + events[i].amount + ' of token ' + events[i].token
+      flushHistory.appendChild(flush)
+    }
   })
 }
 
-// wait for everything to load before initializing
+// wait for everything to[i] load before initializing
 window.addEventListener('load', function() {
   // check if Web3 has been injected by the browser (Mist/MetaMask)
   if (window.web3) {
