@@ -157,7 +157,7 @@ function getWeiTokenBalance() {
   }
 }
 
-function checkTokenAllowance(token) {
+async function checkTokenAllowance(token) {
   // get the row for this token by address
   let tr = document.getElementById(token.address)
   // token quantity cell
@@ -167,24 +167,23 @@ function checkTokenAllowance(token) {
   tr.appendChild(qty)
 
   // get token qty allowance for contract from web3
-  token.erc20.methods.allowance(userAccount, deployedAddress).call(function(error, allowance){
-    if (error) {
-      console.log(token.name, 'incompatible with allowance')
-      deleteRow(token.address)  // delete token's html
+  try {
+    let allowance = await token.erc20.methods.allowance(userAccount, deployedAddress).call()
+    if (allowance < token.wei) {
+      displayApproveButton(tr, token)
     } else {
-      if (allowance < token.wei) {
-        displayApproveButton(tr, token)
-      } else {
-        // display APPROVED
-        var approveCell = document.createElement('div')
-        approveCell.setAttribute('class', 'divTableCell')
-        approveCell.textContent = 'APPROVED'
-        tr.appendChild(approveCell)
-        console.log(token.name, 'APPROVED', allowance)
-      }
-      displayFlushButton(tr, token)
+      // display APPROVED
+      var approveCell = document.createElement('div')
+      approveCell.setAttribute('class', 'divTableCell')
+      approveCell.textContent = 'APPROVED'
+      tr.appendChild(approveCell)
+      console.log(token.name, 'APPROVED', allowance)
     }
-  })
+    displayFlushButton(tr, token)
+  } catch(err) {
+    console.log(token.name, 'incompatible with allowance')
+    deleteRow(token.address)  // delete token's html
+  }
 }
 
 function deleteRow(address) {
@@ -224,7 +223,6 @@ function displayFlushButton(tr, token) {
 async function getPastFlushEvents() {
   // 6342979 is when the contract was deployed so it's earliest block possible
   let events = await shitcoinToilet.getPastEvents('Flushed', {fromBlock: 6342979, toBlock: 'latest'})
-  console.log(events)
   let flushHistory = document.getElementById('pastFlushes')
 
   // only show 5 most recent Flushed events
@@ -238,7 +236,7 @@ async function getPastFlushEvents() {
     let qty = events[i].returnValues.amount / 10**decimals
 
     let flush = document.createElement('div')
-    flush.textContent = events[i].returnValues.user + ' flushed ' + qty + name
+    flush.textContent = events[i].returnValues.user + ' flushed ' + qty + ' ' + name
     flushHistory.appendChild(flush)
   }
 }
