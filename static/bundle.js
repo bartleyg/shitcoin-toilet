@@ -58871,6 +58871,8 @@ function cleanUpTokenJSON(uglyJSON) {
       continue  // ETH is no shitcoin
     json['etherscanQty'] = qtyname[0]
     json['address'] = uglyJSON[i].address.slice(-42)
+    if (json['address'] === '0x079786d7d25b7a661e2d69a53c77d7261ce4cee4')
+      continue  // 💩COIN is not considered shitcoin if present :)
     // limit token quantity to 100k to exclude things like Augur SHARE tokens in the billions+
     // '-' are known worthless nontrading tokens
     if (uglyJSON[i].value === '-' && json['etherscanQty'] < 100000) {
@@ -58946,7 +58948,7 @@ function checkTokenAllowance(token) {
   // get token qty allowance for contract from web3
   token.erc20.methods.allowance(userAccount, deployedAddress).call(function(error, allowance){
     if (error) {
-      console.log('allowance error', error)
+      console.log(token.name, 'incompatible with allowance')
       deleteRow(token.address)  // delete token's html
     } else {
       if (allowance < token.wei) {
@@ -58998,18 +59000,26 @@ function displayFlushButton(tr, token) {
   tr.appendChild(flushCell)
 }
 
-function getPastFlushEvents() {
-  shitcoinToilet.getPastEvents('Flushed')
-  .then(function(events){
-    console.log(events.length, 'events')
-    console.log(events) // array of past event objects
-    var flushHistory = document.getElementById('pastFlushes')
-    for (var i = 0; i < events.length; i++) {
-      var flush = document.createElement('div')
-      flush.textContent = events[i].user + ' flushed ' + events[i].amount + ' of token ' + events[i].token
-      flushHistory.appendChild(flush)
-    }
-  })
+async function getPastFlushEvents() {
+  // 6342979 is when the contract was deployed so it's earliest block possible
+  let events = await shitcoinToilet.getPastEvents('Flushed', {fromBlock: 6342979, toBlock: 'latest'})
+  console.log(events)
+  let flushHistory = document.getElementById('pastFlushes')
+
+  // only show 5 most recent Flushed events
+  for (let i = events.length-1; i > events.length - 6; i--) {
+    let address = events[i].returnValues.token
+    let token = new web3.eth.Contract(detailedERC20.abi, address, {from: userAccount})
+
+    let decimals = await token.methods.decimals().call()
+    let name = await token.methods.name().call()
+
+    let qty = events[i].returnValues.amount / 10**decimals
+
+    let flush = document.createElement('div')
+    flush.textContent = events[i].returnValues.user + ' flushed ' + qty + name
+    flushHistory.appendChild(flush)
+  }
 }
 
 // wait for everything to[i] load before initializing
