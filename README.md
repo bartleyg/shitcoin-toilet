@@ -1,2 +1,3 @@
 # shitcoin-toilet
+![Shitcoin Toilet Screenshot](screenshot.png?raw=true "Shitcoin Toilet Screenshot")
 [Shitcoin Toilet](https://bartleyg.github.io/shitcoin-toilet) lets you flush your worthless ERC20 shitcoins, spamcoins, and dust down the toilet and receive shiny new ERC223 💩COINs in its place! It reads your ethereum address from an Ethereum web3 compatible browser. Then your ERC20 tokens and balances are parsed from Etherscan. The tokens with little to no value in your wallet are displayed on the site interface. First you must Approve the smart contract for the shitcoin due to ERC20's limitations, then Flush it to exchange the shitcoins for the same amount of 💩COIN. The ERC223 would not require the two transaction process.
